@@ -1,0 +1,133 @@
+---
+title: "Practical Machine Learning Course Project"
+author: "Andreas von Ballmoos"
+date: "April 20, 2015"
+output: html_document
+---
+
+# Introduction #
+
+This is the document for the course project of Coursera/JHU's course "Practical Machine Learning" in April 2015.
+
+The project takes place in the quantified self movement. The data for this project has been generously provided by http://groupware.les.inf.puc-rio.br/har. They are the result of a study of correctly and incorrectly performed weight lifts. Our goal is to use the data to predict the manner (class) in which the participants did the exercise: 
+
+- exactly according to the specification (Class A)
+- throwing the elbows to the front (Class B)
+- lifting the dumbbell only halfway (Class C)
+- lowering the dumbbell only halfway (Class D)
+- throwing the hips to the front (Class E)
+
+Source: http://groupware.les.inf.puc-rio.br/public/papers/2013.Velloso.QAR-WLE.pdf
+
+# Prerequisits #
+
+Load the needed R libraries & set a seed for reproducability:
+
+```{r}
+library(caret)
+library(rpart) 
+library(rattle)
+library(randomForest)
+set.seed(20150422)
+```
+
+# Getting and cleaning the data #
+
+
+```{r}
+trainDataUrl = "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+testDataUrl ="http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+
+# download
+trainSet <- read.csv(trainDataUrl, na.strings=c("NA","#DIV/0!","")) #19622 cases, class in the last column
+testSet <- read.csv(testDataUrl, na.strings=c("NA","#DIV/0!","")) #20 cases, problem_id in the last column
+
+# cleaning data 1: remove columns from training and test set that have more than 90% NAs in the training set, http://stackoverflow.com/questions/15968494/how-to-delete-columns-with-na-in-r
+trainSet2 <- trainSet[, colSums(is.na(trainSet)) < nrow(trainSet) * 0.9]
+testSet2 <- testSet[, colSums(is.na(trainSet)) < nrow(trainSet) * 0.9]
+
+#cleaning data 2: remove the first seven columns (name, time,...) - they are no useful measurements
+trainSet3 <- trainSet2[, -c(1:7)]
+testSet3 <- testSet2[, -c(1:7)]
+
+str(trainSet3)
+str(testSet3)
+
+summary(trainSet3$classe)
+
+```
+
+
+# Creating the training and test sets #
+
+```{r}
+inTrain <- createDataPartition(y=trainSet3$classe,p=0.7, list=FALSE)
+training <- trainSet3[inTrain,]
+testing <- trainSet3[-inTrain,]
+```
+
+
+# Building the model #
+
+## Decision tree ##
+
+Build the model:
+
+```{r}
+modFit <- train(classe ~ .,method="rpart",data=training)
+fancyRpartPlot(modFit$finalModel)
+
+```
+
+Predict the testing result:
+```{r}
+testprediction <- predict(modFit, newdata=testing)
+confusionMatrix(testprediction, testing$classe)
+
+```
+
+## Random forest ##
+Build the model:
+
+```{r}
+modFit2 <- train(classe ~ .,method="rf",data=training)
+```
+
+Predict the testing result:
+```{r}
+testprediction2 <- predict(modFit2, newdata=testing)
+confusionMatrix(testprediction2, testing$classe)
+modFit2$finalModel
+
+```
+
+## Estimated out of sample error of the models ##
+
+The estimated out of sample error is (1- accuracy), which is 0.xx for the decision tree and 0.xx for the random forest.
+
+## Model decision ##
+
+I decide to go to the submission with the Random Forest model , because it
+
+- has a much higher accuracy
+- has built-in cross validation (see http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm#ooberr "The out-of-bag (oob) error estimate")
+- shows a stable result set for the predictions to be submitted with various seeds - I tried a few different values for set.seed()
+
+
+# Predict the values to be submitted #
+```{r}
+submitprediction <- predict(modFit2, testSet3)
+submitprediction
+```
+
+# Write the files for the submission #
+```{r}
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+pml_write_files(submitprediction)
+```
