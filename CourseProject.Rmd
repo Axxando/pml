@@ -21,7 +21,7 @@ Source: http://groupware.les.inf.puc-rio.br/public/papers/2013.Velloso.QAR-WLE.p
 
 # Prerequisits #
 
-Load the needed R libraries & set a seed for reproducability:
+Load the needed R libraries & set a seed to be reproducible:
 
 ```{r}
 library(caret)
@@ -49,9 +49,6 @@ testSet2 <- testSet[, colSums(is.na(trainSet)) < nrow(trainSet) * 0.9]
 #cleaning data 2: remove the first seven columns (name, time,...) - they are no useful measurements
 trainSet3 <- trainSet2[, -c(1:7)]
 testSet3 <- testSet2[, -c(1:7)]
-
-str(trainSet3)
-str(testSet3)
 
 summary(trainSet3$classe)
 
@@ -83,7 +80,7 @@ Predict the testing result:
 ```{r}
 testprediction <- predict(modFit, newdata=testing)
 confusionMatrix(testprediction, testing$classe)
-
+modFit$finalModel
 ```
 
 ## Random forest ##
@@ -103,21 +100,20 @@ modFit2$finalModel
 
 ## Estimated out of sample error of the models ##
 
-The estimated out of sample error is (1- accuracy), which is 0.xx for the decision tree and 0.xx for the random forest.
+The estimated out of sample error is (1- accuracy), which is 44.4% for the decision tree and 0.7% for the random forest.
 
 ## Model decision ##
 
 I decide to go to the submission with the Random Forest model , because it
 
 - has a much higher accuracy
-- has built-in cross validation (see http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm#ooberr "The out-of-bag (oob) error estimate") 
+- has built-in cross validation, so there's no further work to meet this course project requirement (see http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm#ooberr "The out-of-bag (oob) error estimate") 
 - shows a stable result set for the predictions to be submitted with various seeds - I tried a few different values for set.seed()
 
 
 # Predict the values to be submitted #
 ```{r}
 submitprediction <- predict(modFit2, testSet3)
-submitprediction
 ```
 
 # Write the files for the submission #
