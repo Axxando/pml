@@ -110,7 +110,7 @@ The estimated out of sample error is (1- accuracy), which is 0.xx for the decisi
 I decide to go to the submission with the Random Forest model , because it
 
 - has a much higher accuracy
-- has built-in cross validation (see http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm#ooberr "The out-of-bag (oob) error estimate")
+- has built-in cross validation (see http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm#ooberr "The out-of-bag (oob) error estimate") 
 - shows a stable result set for the predictions to be submitted with various seeds - I tried a few different values for set.seed()
 
 
